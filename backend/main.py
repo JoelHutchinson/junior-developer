@@ -6,7 +6,6 @@ import re
 
 app = FastAPI()
 
-
 @app.get("/data", response_model=list[Data])
 def get_data() -> list[Data]:
     """
@@ -21,10 +20,14 @@ def get_data() -> list[Data]:
 
     # Parse JSON and validate each item against the Data model
     list_of_data = [Data.model_validate(item) for item in json.loads(data)]
-    
-    # Replace <ref> tags in each data item's content field
-    return resolve_all_references(list_of_data)
 
+    # Add favicons to sources
+    list_of_data = add_favicon_to_all_data(list_of_data)
+
+    # Replace <ref> tags in each data item's content field
+    list_of_data = resolve_all_references(list_of_data)
+    
+    return list_of_data
 
 def resolve_all_references(data_list: list[Data]) -> list[Data]:
     """
@@ -41,31 +44,50 @@ def resolve_all_references(data_list: list[Data]) -> list[Data]:
         data = resolve_references_in_data(data)
     return data_list
 
-
 def resolve_references_in_data(data: Data) -> Data:
-    """
-    Replaces <ref>...</ref> tags in the `content` of a single Data object
-    with corresponding <a href="...">...</a> HTML links based on `sources`.
+    # Extract all <ref>...</ref> IDs from the content
+    cited_ids = set(re.findall(r"<ref>(.*?)</ref>", data.content))
 
-    Args:
-        data: A Data object whose content may include <ref>ID</ref> tags.
+    # Set the .cited flag and build replacement map
+    source_replacement_elements = {}
+    for s in data.sources:
+        s.cited = s.id in cited_ids
+        source_replacement_elements[s.id] = f'<a href="{s.source}">{s.title}</a>'
 
-    Returns:
-        The modified Data object with content where <ref> tags have been replaced
-        by HTML links to the appropriate source.
-    """
-    # Map each source ID to an HTML anchor tag
-    source_replacement_elements = {
-        s.id: f'<a href="{s.source}">{s.title}</a>'
-        for s in data.sources
-    }
-
-    # Regex replacement function for <ref>ID</ref>
+    # Replace <ref>ID</ref> with <a>...</a>
     def repl(match):
         ref_id = match.group(1)
         return source_replacement_elements.get(ref_id, f"[missing ref: {ref_id}]")
 
-    # Replace all <ref>...</ref> occurrences in the content
     data.content = re.sub(r"<ref>(.*?)</ref>", repl, data.content)
 
+    return data
+
+def add_favicon_to_all_data(data_list: list[Data]) -> list[Data]:
+    """
+    Adds favicons to all sources in a list of Data objects.
+    
+    Args:
+        data_list: List of Data objects to process.
+
+    Returns:
+        The modified list of Data objects with favicons added to sources.
+    """
+    return [add_favicon_to_data(data) for data in data_list]
+
+def add_favicon_to_data(data: Data) -> Data:
+    """
+    Adds a favicon URL to each source in the Data object based on its domain.
+    
+    Args:
+        data: A Data object containing sources with domains.
+
+    Returns:
+        The modified Data object with favicons added to sources.
+    """
+    for source in data.sources:
+        domain = getattr(source, "source", None)
+        if domain:
+            source.favicon = f"https://www.google.com/s2/favicons?sz=64&domain={domain}"
+    
     return data
