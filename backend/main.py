@@ -7,7 +7,6 @@ import re
 
 import hashlib
 
-
 app = FastAPI()
 
 @app.get("/data", response_model=list[EnrichedData])
@@ -44,10 +43,13 @@ def enrich_data(item: Data) -> EnrichedData:
     raw = f"{item.category}|{item.content}"
     id = hashlib.md5(raw.encode()).hexdigest()
 
+    # Sanitize and format content
+    processed_content = process_content(item.content)
+
     return EnrichedData(
         id=id,
         category=item.category,
-        content=item.content,
+        content=processed_content,
         sources=enriched_sources,
         cited_count=cited_count
     )
@@ -83,3 +85,10 @@ def is_source_cited(source: Source, content: str) -> bool:
 def count_cited_sources(sources: list[EnrichedSource]) -> int:
     """Count how many sources are cited."""
     return sum(1 for source in sources if source.is_cited)
+
+def process_content(text: str) -> str:
+    """Process the content for web display."""
+    # Replace newlines with <br />
+    processed_text = text.replace('\n', '<br />')
+
+    return processed_text
