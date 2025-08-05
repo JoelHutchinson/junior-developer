@@ -27,9 +27,13 @@ def process_data(item: Data) -> EnrichedData:
     return item
 
 def resolve_references(item: Data) -> Data:
-    """Replace ref ids with source links in the content."""
-    for source in item.sources:
-        item.content = item.content.replace(f"[{source.id}]", source.source)
+    """Replace <ref>id</ref> tags with HTML <sub> anchor links to the source."""
+    for i, source in enumerate(item.sources, start=1):
+        pattern = f"<ref>{re.escape(source.id)}</ref>"
+        link = (
+            f'<sup><a href="{source.source}" target="_blank" rel="noopener noreferrer">[{i}]</a></sup>'
+        )
+        item.content = item.content.replace(pattern, link)
     return item
 
 def enrich_data(item: Data) -> EnrichedData:
