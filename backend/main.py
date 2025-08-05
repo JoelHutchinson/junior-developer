@@ -1,93 +1,85 @@
+
 import json
 from fastapi import FastAPI
-from models import Data
+from models import Data, Source, EnrichedData, EnrichedSource   
 from pathlib import Path
 import re
 
+import hashlib
+
+
 app = FastAPI()
 
-@app.get("/data", response_model=list[Data])
-def get_data() -> list[Data]:
-    """
-    Endpoint to return the parsed and reference-resolved data from a local JSON file.
-    
-    - Loads raw JSON from 'data/mock.json'.
-    - Validates each entry against the `Data` model.
-    - Replaces all <ref>...</ref> tags in content fields with appropriate HTML anchor tags.
-    - Returns the transformed list of Data objects.
-    """
+@app.get("/data", response_model=list[EnrichedData])
+def get_data() -> list[EnrichedData]:
+    """Fetch and process data from a mock JSON file."""
     data = Path("data/mock.json").read_text()
-
-    # Parse JSON and validate each item against the Data model
     list_of_data = [Data.model_validate(item) for item in json.loads(data)]
-
-    # Add favicons to sources
-    list_of_data = add_favicon_to_all_data(list_of_data)
-
-    # Replace <ref> tags in each data item's content field
-    list_of_data = resolve_all_references(list_of_data)
     
-    return list_of_data
+    # Process each content item
+    processed_data = [process_data(item) for item in list_of_data]
 
-def resolve_all_references(data_list: list[Data]) -> list[Data]:
-    """
-    Replaces <ref>...</ref> tags with HTML anchor tags in the content field
-    for each Data object in a list.
+    return processed_data
 
-    Args:
-        data_list: List of Data objects with potential <ref> tags in `content`.
+def process_data(item: Data) -> EnrichedData:
+    """Process the data item to resolve references and enrich sources."""
+    item = resolve_references(item)
+    item = enrich_data(item)
+    return item
 
-    Returns:
-        The modified list of Data objects with resolved references.
-    """
-    for data in data_list:
-        data = resolve_references_in_data(data)
-    return data_list
+def resolve_references(item: Data) -> Data:
+    """Replace ref ids with source links in the content."""
+    for source in item.sources:
+        item.content = item.content.replace(f"[{source.id}]", source.source)
+    return item
 
-def resolve_references_in_data(data: Data) -> Data:
-    # Extract all <ref>...</ref> IDs from the content
-    cited_ids = set(re.findall(r"<ref>(.*?)</ref>", data.content))
+def enrich_data(item: Data) -> EnrichedData:
+    """Enrich the data item with additional information including citations and source favicons."""
+    enriched_sources = enrich_sources(item.sources, item.content)
 
-    # Set the .cited flag and build replacement map
-    source_replacement_elements = {}
-    for s in data.sources:
-        s.cited = s.id in cited_ids
-        source_replacement_elements[s.id] = f'<a href="{s.source}">{s.title}</a>'
+    # Count cited sources
+    cited_count = count_cited_sources(enriched_sources)
 
-    # Replace <ref>ID</ref> with <a>...</a>
-    def repl(match):
-        ref_id = match.group(1)
-        return source_replacement_elements.get(ref_id, f"[missing ref: {ref_id}]")
+    # Generate a unique id for the enriched data
+    raw = f"{item.category}|{item.content}"
+    id = hashlib.md5(raw.encode()).hexdigest()
 
-    data.content = re.sub(r"<ref>(.*?)</ref>", repl, data.content)
+    return EnrichedData(
+        id=id,
+        category=item.category,
+        content=item.content,
+        sources=enriched_sources,
+        cited_count=cited_count
+    )
 
-    return data
+def enrich_sources(sources: list[Source], content: str) -> list[EnrichedSource]:
+    """Enrich sources with favicon URLs and citation status."""
+    enriched_sources = []
+    for source in sources:
+        domain = extract_domain(source.source)
+        enriched_sources.append(EnrichedSource(
+            id=source.id,
+            title=source.title,
+            source=source.source,
+            favicon_url=generate_favicon_url(domain),
+            is_cited=is_source_cited(source, content)
+        ))
+    return enriched_sources
 
-def add_favicon_to_all_data(data_list: list[Data]) -> list[Data]:
-    """
-    Adds favicons to all sources in a list of Data objects.
-    
-    Args:
-        data_list: List of Data objects to process.
+def extract_domain(url: str) -> str:
+    """Extract the domain from a URL."""
+    match = re.search(r"https?://([^/]+)", url)
+    return match.group(1) if match else ""
 
-    Returns:
-        The modified list of Data objects with favicons added to sources.
-    """
-    return [add_favicon_to_data(data) for data in data_list]
+def generate_favicon_url(domain: str) -> str:
+    """Generate a favicon URL using the domain and google's favicon service."""
+    return f"https://www.google.com/s2/favicons?sz=16&domain={domain}"
 
-def add_favicon_to_data(data: Data) -> Data:
-    """
-    Adds a favicon URL to each source in the Data object based on its domain.
-    
-    Args:
-        data: A Data object containing sources with domains.
+def is_source_cited(source: Source, content: str) -> bool:
+    """Check if the source is cited in the content."""
+    pattern = re.compile(re.escape(source.title), re.IGNORECASE)
+    return bool(pattern.search(content))
 
-    Returns:
-        The modified Data object with favicons added to sources.
-    """
-    for source in data.sources:
-        domain = getattr(source, "source", None)
-        if domain:
-            source.favicon = f"https://www.google.com/s2/favicons?sz=64&domain={domain}"
-    
-    return data
+def count_cited_sources(sources: list[EnrichedSource]) -> int:
+    """Count how many sources are cited."""
+    return sum(1 for source in sources if source.is_cited)

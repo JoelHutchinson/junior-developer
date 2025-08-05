@@ -5,10 +5,23 @@ class Source(BaseModel):
     id: str
     title: str
     source: str
-    favicon: Optional[str] = None
-    cited: Optional[bool] = None
 
 class Data(BaseModel):
     category: str
     sources: list[Source]
     content: str
+
+# Enriched models for API responses
+class EnrichedSource(BaseModel):
+    id: str
+    title: str
+    source: str
+    favicon_url: str
+    is_cited: bool
+
+class EnrichedData(BaseModel):
+    id: str
+    category: str
+    content: str
+    sources: list[EnrichedSource]
+    cited_count: int
