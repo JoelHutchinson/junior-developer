@@ -16,7 +16,7 @@ export default function Content(props: ContentProps) {
         <h3 className="font-semibold text-xl mb-1">References</h3>
         <ul>
           {props.data.sources.map((source: EnrichedSource, index: number) => (
-            <Reference key={source.id} source={source} index={index} />
+            <Reference key={source.id} source={source} number={index + 1} />
           ))}
         </ul>
       </div>

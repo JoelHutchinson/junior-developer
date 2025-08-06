@@ -16,22 +16,22 @@ def get_data() -> list[EnrichedData]:
     list_of_data = [Data.model_validate(item) for item in json.loads(data)]
     
     # Process each content item
-    processed_data = [process_data(item) for item in list_of_data]
+    processed_data = [process_data(item) for item in (list_of_data)]
 
     return processed_data
 
 def process_data(item: Data) -> EnrichedData:
     """Process the data item to resolve references and enrich sources."""
-    item = resolve_references(item)
-    item = enrich_data(item)
-    return item
+    enriched_item = enrich_data(item)
+    enriched_item = resolve_references(enriched_item)
+    return enriched_item
 
-def resolve_references(item: Data) -> Data:
+def resolve_references(item: EnrichedData) -> EnrichedData:
     """Replace <ref>id</ref> tags with HTML <sub> anchor links to the source."""
-    for i, source in enumerate(item.sources, start=1):
+    for reference_index, source in enumerate(item.sources):
         pattern = f"<ref>{re.escape(source.id)}</ref>"
         link = (
-            f'<sup><a href="#reference-{i}" rel="noopener noreferrer" class="link-primary">[{i}]</a></sup>'
+            f'<sup><a href="#reference-{source.id}" rel="noopener noreferrer" class="link-primary">[{reference_index + 1}]</a></sup>'
         )
         item.content = item.content.replace(pattern, link)
     return item

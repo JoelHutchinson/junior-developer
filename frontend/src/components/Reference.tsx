@@ -4,19 +4,18 @@ import { EnrichedSource } from "@/utils/types";
 import Image from "next/image";
 
 interface SourceProps {
-  
   source: EnrichedSource;
-  index: number;
+  number: number;
 }
 
 export default function Reference(props: SourceProps) {
   return (
     <li
       key={props.source.id}
-      id={`reference-${props.index + 1}`}
+      id={`reference-${props.source.id}`}
       className="flex items-center gap-2"
     >
-      <span>{props.index + 1}.</span>
+      <span>{props.number}.</span>
       {props.source.favicon_url && (
         <Image
           src={props.source.favicon_url}
