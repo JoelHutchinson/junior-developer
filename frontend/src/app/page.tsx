@@ -51,7 +51,7 @@ export default async function Home() {
           ) : Object.keys(dataGroupedByCategory).length > 0 ? (
             Object.entries(dataGroupedByCategory).map(([category, items]) => (
               <div key={category} className="flex flex-col gap-2">
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-bold mb-2">
                   {formatCategory(category)}
                 </h3>
                 {items.map((item: EnrichedData) => (
