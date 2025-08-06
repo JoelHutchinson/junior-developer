@@ -31,7 +31,7 @@ def resolve_references(item: Data) -> Data:
     for i, source in enumerate(item.sources, start=1):
         pattern = f"<ref>{re.escape(source.id)}</ref>"
         link = (
-            f'<sup><a href="{source.source}" target="_blank" rel="noopener noreferrer">[{i}]</a></sup>'
+            f'<sup><a href="#reference-{i}" rel="noopener noreferrer" class="link-primary">[{i}]</a></sup>'
         )
         item.content = item.content.replace(pattern, link)
     return item
