@@ -13,17 +13,10 @@ export default function Reference(props: SourceProps) {
     <li
       key={props.source.id}
       id={`reference-${props.source.id}`}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 target:bg-blue-100"
     >
       <span>{props.number}.</span>
-      {props.source.favicon_url && (
-        <Image
-          src={props.source.favicon_url}
-          alt={`${props.source.title} favicon`}
-          width={16}
-          height={16}
-        />
-      )}
+
       <a
         href={props.source.source}
         target="_blank"
@@ -32,6 +25,16 @@ export default function Reference(props: SourceProps) {
       >
         {props.source.title}
       </a>
+
+      {props.source.favicon_url && (
+        <Image
+          src={props.source.favicon_url}
+          alt={`${props.source.title} favicon`}
+          width={16}
+          height={16}
+          className="size-4"
+        />
+      )}
     </li>
   );
 }
