@@ -11,5 +11,4 @@ export type EnrichedData = {
   category: string;
   content: string;
   sources: EnrichedSource[];
-  cited_count: number;
 };

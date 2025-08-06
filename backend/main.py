@@ -51,9 +51,6 @@ def enrich_data(item: Data) -> EnrichedData:
     """Enrich the data item with additional information including citations and source favicons."""
     enriched_sources = enrich_sources(item.sources, item.content)
 
-    # Count cited sources
-    cited_count = count_cited_sources(enriched_sources)
-
     # Generate a unique id for the enriched data
     raw = f"{item.category}|{item.content}"
     id = hashlib.md5(raw.encode()).hexdigest()
@@ -66,7 +63,6 @@ def enrich_data(item: Data) -> EnrichedData:
         category=item.category,
         content=processed_content,
         sources=enriched_sources,
-        cited_count=cited_count
     )
 
 def enrich_sources(sources: list[Source], content: str) -> list[EnrichedSource]:

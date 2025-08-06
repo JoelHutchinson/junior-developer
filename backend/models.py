@@ -24,4 +24,3 @@ class EnrichedData(BaseModel):
     category: str
     content: str
     sources: list[EnrichedSource]
-    cited_count: int
