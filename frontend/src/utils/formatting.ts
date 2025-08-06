@@ -1,4 +1,10 @@
 export const formatCategory = (category: string) => {
-  const [first, ...rest] = category.split("_");
-  return [first.charAt(0).toUpperCase() + first.slice(1), ...rest].join(" ");
+  const words = category
+    .split("_")
+    .map((word, index) =>
+      index === 0
+        ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        : word.toLowerCase()
+    );
+  return words.join(" ");
 };
