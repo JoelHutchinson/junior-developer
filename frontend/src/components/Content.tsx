@@ -12,6 +12,8 @@ export default function Content(props: ContentProps) {
     <div className="border-2 border-gray-300 rounded-md flex flex-col gap-6 bg-white text-gray-800">
       <div className="p-4">
         <h3 className="font-bold text-xl mb-2">Advice</h3>
+
+        {/* NOTE: In production, we would sanitize this HTML content (ideally on the back-end) */}
         <div dangerouslySetInnerHTML={{ __html: props.data.content }}></div>
       </div>
 
