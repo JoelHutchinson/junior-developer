@@ -2,7 +2,7 @@ import { EnrichedData } from "./types";
 
 export const fetchData = async (): Promise<EnrichedData[] | null> => {
   try {
-    const response = await fetch(`${process.env.API_URL}/data`, {
+    const response = await fetch(`/api/data`, {
       cache: "no-store",
     });
 
@@ -12,7 +12,10 @@ export const fetchData = async (): Promise<EnrichedData[] | null> => {
 
     return response.json() as Promise<EnrichedData[]>;
   } catch (error) {
-    console.error("Error fetching content:", error);
-    return null;
+    throw new Error(
+      `Error fetching data: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 };
