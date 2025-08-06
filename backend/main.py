@@ -28,12 +28,23 @@ def process_data(item: Data) -> EnrichedData:
 
 def resolve_references(item: EnrichedData) -> EnrichedData:
     """Replace <ref>id</ref> tags with HTML <sub> anchor links to the source."""
-    for reference_index, source in enumerate(item.sources):
-        pattern = f"<ref>{re.escape(source.id)}</ref>"
-        link = (
-            f'<sup><a href="#reference-{source.id}" rel="noopener noreferrer" class="link-primary">[{reference_index + 1}]</a></sup>'
-        )
-        item.content = item.content.replace(pattern, link)
+    source_id_map = {source.id: source for source in item.sources}
+
+    # Function to replace or remove each <ref>...</ref> match
+    def replace_ref(match: re.Match) -> str:
+        ref_id = match.group(1)
+        source = source_id_map.get(ref_id)
+        if source:
+            index = list(source_id_map.keys()).index(ref_id) + 1
+            return (
+                f'<sup><a href="#reference-{source.id}" rel="noopener noreferrer" class="link-primary">[{index}]</a></sup>'
+            )
+        else:
+            return ""  # Remove invalid reference
+
+    # Replace all <ref>...</ref> tags
+    item.content = re.sub(r"<ref>(.*?)</ref>", replace_ref, item.content)
+
     return item
 
 def enrich_data(item: Data) -> EnrichedData:
