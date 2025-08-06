@@ -1,48 +1,23 @@
 "use client";
 
-import Image from "next/image";
-
-import { formatCategory } from "@/utils/formatting";
-import { Data } from "@/utils/types";
+import { EnrichedData, EnrichedSource } from "@/utils/types";
+import Reference from "@/components/Reference";
 
 interface ContentProps {
-  data: Data;
+  data: EnrichedData;
 }
 
 export default function Content(props: ContentProps) {
   return (
-    <div className="border-2 border-gray-300 p-4 rounded-md flex flex-col gap-2 bg-white text-gray-800">
-      <h3 className="font-bold underline">
-        {formatCategory(props.data.category)}
-      </h3>
-
+    <div className="border-2 border-gray-300 p-4 rounded-md flex flex-col gap-4 bg-white text-gray-800">
       <div dangerouslySetInnerHTML={{ __html: props.data.content }}></div>
 
       <div>
-        <h4 className="font-semibold">Related articles:</h4>
+        <h3 className="font-semibold text-xl mb-1">References</h3>
         <ul>
-          {props.data.sources
-            .filter((source) => !source.cited)
-            .map((source) => (
-              <li key={source.id} className="flex items-center gap-2">
-                {source.favicon && (
-                  <Image
-                    src={source.favicon}
-                    alt={`${source.title} favicon`}
-                    width={16}
-                    height={16}
-                  />
-                )}
-                <a
-                  href={source.source}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-primary"
-                >
-                  {source.title}
-                </a>
-              </li>
-            ))}
+          {props.data.sources.map((source: EnrichedSource, index: number) => (
+            <Reference key={source.id} source={source} index={index} />
+          ))}
         </ul>
       </div>
     </div>
