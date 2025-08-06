@@ -40,7 +40,7 @@ export default async function Home() {
             /* If data is available, map through it and render each piece of content */
             dataGroupedByCategory ? (
               Object.entries(dataGroupedByCategory).map(([category, items]) => (
-                <div key={category} className="flex flex-col gap-4">
+                <div key={category} className="flex flex-col gap-2">
                   <h3 className="text-xl font-semibold mb-2">
                     {formatCategory(category)}
                   </h3>
@@ -54,7 +54,6 @@ export default async function Home() {
             )
           }
         </div>
-        {/* Each piece of content in the list should have its own content component */}
       </main>
     </div>
   );
